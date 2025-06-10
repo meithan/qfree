@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(
   free: all processors are available
   avail: some processors are available, but not all
   full: no processors available on this node
-  offline: node online but not accepting jobs
+  offline: node not accepting jobs
   down: node is down
 
 Author: Juan C. Toledo
