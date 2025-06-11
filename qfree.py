@@ -59,6 +59,7 @@ root = ET.fromstring(stdout)
 
 print(colored(nice_format(["Node", "State", "Procs avail / total"]), "bold"))
 
+tot_counts = {"avail": [], "used": []}
 for node in root:
   
   name = node.find("name").text.replace(".nucleares.unam.mx", "")
@@ -66,6 +67,7 @@ for node in root:
   jobs = node.find("jobs")
   np_tot = int(node.find("np").text)
  
+  # Count available processes
   np_used = 0
   np_avail = np_tot
   if jobs is None:
@@ -83,7 +85,9 @@ for node in root:
       np_used += len(cpu_list) 
     np_avail = np_tot - np_used
   
+  # Determine and print state
   if state_raw in ["down", "offline"]:
+    state = state_raw
     if args.all:
       print(nice_format([name, colored(state_raw, "black"), ""]))
   elif state_raw in ["free", "job-exclusive"]:
@@ -103,6 +107,13 @@ for node in root:
     state = state_raw
     print(nice_format([name, state, np]))
 
+  if state not in ["down", "offline"]:
+    if np_avail > 0:
+      tot_counts["avail"].append(np_avail)
+    if np_used > 0:
+      tot_counts["used"].append(np_used)
+
+  # Print jobs on this node
   if args.job_id is not None:
     for job_id, cpu_list in jobs.items():
       if args.job_id == "all" or args.job_id == job_id:  
@@ -110,3 +121,9 @@ for node in root:
 
 if args.job_id not in ["all", None]:
   print("(Showing job {} only)".format(colored(args.job_id, "bold")))
+
+# Show totals
+tot_avail = sum(tot_counts["avail"])
+tot_inuse = sum(tot_counts["used"])
+tot_procs = tot_avail + tot_inuse
+print("Procs: {} free, {} in use, {} total".format(colored(tot_avail, "green"), colored(tot_inuse, "red"), tot_procs))
